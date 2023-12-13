@@ -1,0 +1,203 @@
+<nav
+  class="navbar navbar-expand-lg navbar-dark"
+  style="border-bottom: 1px solid #1f2937"
+>
+  <div class="container-sm">
+    <a class="navbar-brand" href="./#"
+      ><h3 style="color: white">
+        <img src="./assets/logo.png" alt="" /> Manga Site
+      </h3></a
+    >
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarToggler"
+      aria-controls="navbarToggler"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarToggler">
+      <div class="d-flex align-items-center gap-3 ms-auto flex-wrap">
+        <form
+          onsubmit="event.preventDefault(); location.href =  `./?q=${encodeURIComponent(event.target.q.value.trim())}#`"
+        >
+          <input
+            type="text"
+            placeholder="Search..."
+            value=""
+            name="q"
+            autocomplete="off"
+          />
+          <button type="submit">
+            <svg
+              stroke="currentColor"
+              fill="currentColor"
+              stroke-width="0"
+              viewBox="0 0 512 512"
+              class="fill-gray-400 w-5 h-5"
+              height="1em"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M505 442.7L405.3 343c-4.5-4.5-10.6-7-17-7H372c27.6-35.3 44-79.7 44-128C416 93.1 322.9 0 208 0S0 93.1 0 208s93.1 208 208 208c48.3 0 92.7-16.4 128-44v16.3c0 6.4 2.5 12.5 7 17l99.7 99.7c9.4 9.4 24.6 9.4 33.9 0l28.3-28.3c9.4-9.4 9.4-24.6.1-34zM208 336c-70.7 0-128-57.2-128-128 0-70.7 57.2-128 128-128 70.7 0 128 57.2 128 128 0 70.7-57.2 128-128 128z"
+              ></path>
+            </svg>
+          </button>
+        </form>
+        <div id="avatar-action-container"></div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="container-sm" style="min-height: 100vh">
+  <div id="descriptions"></div>
+  <div
+    class="p-3 border border-secondary rounded my-5 d-flex flex-column align-items-stretch gap-3 pt-4"
+  >
+    <div id="comment-box-container">
+      <form class="input-group" autocomplete="off"></form>
+    </div>
+
+    <div
+      id="comments"
+      class="d-flex flex-column align-items-stretch gap-3"
+    ></div>
+  </div>
+</div>
+
+<script type="module">
+  import { mangas } from "./scripts/data.js";
+  import { params } from "./scripts/router.js";
+  import { auth, db, subscriptions } from "./scripts/firebase.js";
+
+  import {
+    doc,
+    getDoc,
+    query,
+    collection,
+    orderBy,
+    onSnapshot,
+    addDoc,
+    serverTimestamp,
+  } from "https://www.gstatic.com/firebasejs/9.9.1/firebase-firestore.js";
+
+  const calculateElapsedTime = (timeCreated) => {
+    const created = new Date(timeCreated).getTime();
+    let periods = {
+      year: 365 * 30 * 24 * 60 * 60 * 1000,
+      month: 30 * 24 * 60 * 60 * 1000,
+      week: 7 * 24 * 60 * 60 * 1000,
+      day: 24 * 60 * 60 * 1000,
+      hour: 60 * 60 * 1000,
+      minute: 60 * 1000,
+    };
+    let diff = Date.now() - created;
+
+    for (const key in periods) {
+      if (diff >= periods[key]) {
+        let result = Math.floor(diff / periods[key]);
+        return `${result} ${result === 1 ? key : key + "s"} ago`;
+      }
+    }
+
+    return "Just now";
+  };
+
+  const manga = mangas.find((item) => item.id === params.id);
+
+  if (!manga) alert("404");
+
+  document.querySelector("#descriptions").innerHTML = `
+    <img src="${manga.cover}" />
+    <div>
+      <h2>${manga.title}</h2>
+      <p>${manga.chapter}</p>
+    </div>
+  `;
+
+  document.querySelector("#comment-box-container form").innerHTML = /*html*/ `
+            <input
+              required
+              type="text"
+              class="form-control bg-dark text-white"
+              placeholder="${
+                auth.currentUser
+                  ? `Comment as ${auth.currentUser.displayName}`
+                  : "Sign in to comment"
+              }"
+              id="comment"
+              name="comment"
+              ${auth.currentUser ? "" : "disabled"}
+            />
+            <button class="btn btn-warning" type="submit" ${
+              auth.currentUser ? "" : "disabled"
+            }>Comment</button>
+          `;
+
+  const form = document.querySelector("#comment-box-container form");
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const title = e.target.comment.value.trim();
+
+    e.target.comment.value = "";
+
+    addDoc(collection(db, "mangas", params.id, "comments"), {
+      title,
+      user: {
+        uid: auth.currentUser.uid,
+        displayName: auth.currentUser.displayName,
+        photoURL: auth.currentUser.photoURL,
+        email: auth.currentUser.email,
+      },
+      createdAt: serverTimestamp(),
+    }).catch((err) => {
+      console.log(err);
+      alert("Failed to comment", err);
+    });
+  });
+
+  const q = query(
+    collection(db, "mangas", params.id, "comments"),
+    orderBy("createdAt", "desc")
+  );
+
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const comments = [];
+
+    querySnapshot.forEach((doc) => {
+      comments.push({ id: doc.id, ...doc.data() });
+
+      let outputHTML = "";
+
+      comments.forEach((comment) => {
+        outputHTML += /*html*/ `
+                <div class="d-flex gap-3">
+                  <img style="width: 30px; height: 30px; border-radius: 9999px" src="https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                    comment.user.displayName
+                  )}" alt="">
+                  <div>
+                    <p class="m-0"><strong>${
+                      comment.user.displayName
+                    }</strong> <span>${calculateElapsedTime(
+          comment.createdAt?.seconds
+            ? comment.createdAt.seconds * 1000
+            : Date.now()
+        )}</span class="text-secondary"></p>
+                    <p class="m-0">${comment.title}</p>
+                  </div>
+                </div>
+              `;
+      });
+
+      document.querySelector("#comments").innerHTML = outputHTML;
+    });
+  });
+
+  subscriptions.push(unsubscribe);
+</script>

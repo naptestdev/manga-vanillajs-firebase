@@ -1,0 +1,168 @@
+:root {
+  --background: #12181b;
+}
+
+body {
+  background: var(--background);
+  color: white;
+}
+
+.navbar h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.navbar h3 img {
+  width: 35px;
+  height: 35px;
+}
+.navbar form {
+  position: relative;
+}
+
+.navbar form input {
+  background: var(--background);
+  border: 1px solid #4b5563;
+  outline: none;
+  border-radius: 9999px;
+  padding: 10px 14px;
+  width: 200px;
+  color: white;
+}
+
+.navbar form button {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  outline: none;
+  background: none;
+  color: white;
+  display: flex;
+  justify-content: center;
+}
+
+.navbar-btn {
+  border: 1px solid white;
+  color: white;
+  text-decoration: none;
+  width: 35px;
+  height: 35px;
+  font-size: 20px;
+  border-radius: 9999px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: 0.3s;
+}
+
+.navbar-btn:hover {
+  color: #c62828;
+}
+
+#recommendation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.avatar-action {
+  position: relative;
+  cursor: pointer;
+}
+
+.avatar-action img {
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+}
+
+.popup {
+  opacity: 0;
+  visibility: hidden;
+  position: absolute;
+  transition: 0.3s;
+  z-index: 2;
+  right: 0;
+  transform: translateY(-5px);
+  box-shadow: 0 0 10px gray;
+  border-radius: 6px;
+  overflow: hidden;
+  width: max-content;
+}
+
+.popup-left {
+  right: unset;
+  left: 0;
+}
+
+.popup .action-button {
+  cursor: pointer;
+  width: 100%;
+  text-wrap: nowrap;
+  border: none;
+  outline: none;
+  background: white;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: white;
+  transition: 0.3s;
+}
+
+.popup .action-button:hover {
+  background: #e8e8e8;
+}
+
+.popup .action-button i {
+  font-size: 14px !important;
+}
+.popup .action-button {
+  font-size: 14px !important;
+}
+
+.avatar-action:focus-within .popup {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.manga-card {
+  display: block;
+  color: white;
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+.manga-card img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+}
+
+.manga-card p {
+  margin-bottom: 0;
+}
+
+.manga-card strong {
+  display: block;
+  margin-top: 5px;
+}
+
+.manga-card:hover {
+  color: #6ea8fe;
+}
+
+#descriptions {
+  margin: 30px 0;
+  display: flex;
+  align-items: start;
+  gap: 20px;
+}
+
+#descriptions img {
+  width: 200px;
+  aspect-ratio: 3 / 4;
+}
